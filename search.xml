@@ -1,0 +1,292 @@
+<?xml version="1.0" encoding="utf-8"?>
+<search>
+  <entry>
+    <title>Git · Change Author Information</title>
+    <url>/post/Programming/Git/git-%C2%B7-change-author-information/</url>
+    <content><![CDATA[<p>Before running this script, you’ll need:</p>
+<ul>
+<li>The old email address that appears in the author/committer fields that you want to change</li>
+<li>The correct name and email address that you would like such commits to be attributed to</li>
+</ul>
+<a id="more"></a>
+<p><br></p>
+<h5 id="Create-a-fresh-bare-clone-of-your-repository"><a href="#Create-a-fresh-bare-clone-of-your-repository" class="headerlink" title="Create a fresh, bare clone of your repository"></a>Create a fresh, bare clone of your repository</h5><figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">git clone --bare https://hostname/user/repo.git</span><br><span class="line">cd repo.git</span><br></pre></td></tr></table></figure>
+<h5 id="Copy-and-paste-the-script-replacing-the-following-variables-based-on-the-information-you-gathered"><a href="#Copy-and-paste-the-script-replacing-the-following-variables-based-on-the-information-you-gathered" class="headerlink" title="Copy and paste the script, replacing the following variables based on the information you gathered"></a>Copy and paste the script, replacing the following variables based on the information you gathered</h5><ul>
+<li><code>OLD_EMAIL</code></li>
+<li><code>CORRECT_NAME</code></li>
+<li><code>CORRECT_EMAIL</code></li>
+</ul>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">#!&#x2F;bin&#x2F;sh</span><br><span class="line"></span><br><span class="line">git filter-branch --env-filter &#39;</span><br><span class="line"></span><br><span class="line">OLD_EMAIL&#x3D;&quot;your-old-email@example.com&quot;</span><br><span class="line">CORRECT_NAME&#x3D;&quot;Your Correct Name&quot;</span><br><span class="line">CORRECT_EMAIL&#x3D;&quot;your-correct-email@example.com&quot;</span><br><span class="line"></span><br><span class="line">if [ &quot;$GIT_COMMITTER_EMAIL&quot; &#x3D; &quot;$OLD_EMAIL&quot; ]</span><br><span class="line">then</span><br><span class="line">    export GIT_COMMITTER_NAME&#x3D;&quot;$CORRECT_NAME&quot;</span><br><span class="line">    export GIT_COMMITTER_EMAIL&#x3D;&quot;$CORRECT_EMAIL&quot;</span><br><span class="line">fi</span><br><span class="line">if [ &quot;$GIT_AUTHOR_EMAIL&quot; &#x3D; &quot;$OLD_EMAIL&quot; ]</span><br><span class="line">then</span><br><span class="line">    export GIT_AUTHOR_NAME&#x3D;&quot;$CORRECT_NAME&quot;</span><br><span class="line">    export GIT_AUTHOR_EMAIL&#x3D;&quot;$CORRECT_EMAIL&quot;</span><br><span class="line">fi</span><br><span class="line">&#39; --tag-name-filter cat -- --branches --tags</span><br></pre></td></tr></table></figure>
+<h5 id="Review-the-new-Git-history-for-errors"><a href="#Review-the-new-Git-history-for-errors" class="headerlink" title="Review the new Git history for errors."></a>Review the new Git history for errors.</h5><h5 id="Push-the-corrected-history-to-GitHub-Enterprise"><a href="#Push-the-corrected-history-to-GitHub-Enterprise" class="headerlink" title="Push the corrected history to GitHub Enterprise:"></a>Push the corrected history to GitHub Enterprise:</h5><figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">git push --force --tags origin &#x27;refs/heads/*&#x27;</span><br></pre></td></tr></table></figure>]]></content>
+      <categories>
+        <category>Programming</category>
+        <category>Git</category>
+      </categories>
+      <tags>
+        <tag>Git</tag>
+        <tag>GitHub</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>Home Lab (0) · Proxmox Virtual Environment</title>
+    <url>/post/Self-Hosted/Home-Lab/home-lab-0-%C2%B7-proxmox-virtual-environment/</url>
+    <content><![CDATA[<h1 id="Download-amp-Install"><a href="#Download-amp-Install" class="headerlink" title="Download &amp; Install"></a>Download &amp; Install</h1><p>Download links: <a href="https://www.proxmox.com/en/downloads/category/iso-images-pve">PVE</a>, <a href="https://rufus.ie/downloads/">Rufus</a>.</p>
+<h1 id="General-Setups"><a href="#General-Setups" class="headerlink" title="General Setups"></a>General Setups</h1><h2 id="Port-Forwarding"><a href="#Port-Forwarding" class="headerlink" title="Port Forwarding"></a>Port Forwarding</h2><p>Access web interface on port 443.</p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">iptables -t nat -A PREROUTING -p tcp --dport 443 -j REDIRECT --to-ports 8006</span><br></pre></td></tr></table></figure>
+<h2 id="Startup-Scripts"><a href="#Startup-Scripts" class="headerlink" title="Startup Scripts"></a>Startup Scripts</h2><p>There is no <code>rc.local</code> file in PVE, but you can use <code>crontab</code>.</p>
+<p>Edit file <code>/etc/crontab</code>, add a line:</p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">@reboot root iptables -t nat -A PREROUTING -p tcp --dport 443 -j REDIRECT --to-ports 8006</span><br><span class="line"><span class="comment"># * * * * * root /also/support/user/scripts.sh</span></span><br></pre></td></tr></table></figure>
+<a id="more"></a>
+<h2 id="Remove-Subscription-Notice"><a href="#Remove-Subscription-Notice" class="headerlink" title="Remove Subscription Notice"></a>Remove Subscription Notice</h2><p>Edit <code>/usr/share/javascript/proxmox-widget-toolkit/proxmoxlib.js</code> (line 513 at PVE v7.2).</p>
+<figure class="highlight js"><table><tr><td class="code"><pre><span class="line"><span class="comment">// change if (res === null || res === undefined || !res || res .data.status.toLowerCase() !== &#x27;active&#x27;) &#123;</span></span><br><span class="line"><span class="keyword">if</span> (<span class="literal">false</span> &amp;&amp; (res === <span class="literal">null</span> || res === <span class="literal">undefined</span> || !res || res .data.status.toLowerCase() !== <span class="string">&#x27;active&#x27;</span>)) &#123;</span><br></pre></td></tr></table></figure>
+<h2 id="Disable-Enterprise-Repository"><a href="#Disable-Enterprise-Repository" class="headerlink" title="Disable Enterprise Repository"></a>Disable Enterprise Repository</h2><p>In <code>/etc/apt/sources.list.d/pve-enterprise.list</code>, comment out</p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line"><span class="comment"># deb https://enterprise.proxmox.com/debian/pve bullseye pve-enterprise</span></span><br></pre></td></tr></table></figure>
+<p>Add a no-subscription repository <code>Node - Updates - Repositories - Add</code>.</p>
+<h2 id="Limit-ZFS-Memory-Usage"><a href="#Limit-ZFS-Memory-Usage" class="headerlink" title="Limit ZFS Memory Usage"></a>Limit ZFS Memory Usage</h2><p>ZFS uses 50% of the host memory for the Adaptive Replacement Cache by default. Allocating enough memory for the ARC is crucial for IO performance, so reduce it with caution.</p>
+<p>As a general rule of thumb, allocate at least <code>2 GiB Base + 1 GiB/TiB-Storage</code>. To permanently change the ARC limits, add the following line to <code>/etc/modprobe.d/zfs.conf</code></p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line"><span class="comment"># limits the usage to 8 GiB (8*1024*1024*1024)</span></span><br><span class="line">options zfs zfs_arc_max=8589934592</span><br></pre></td></tr></table></figure>
+<p>If your root file system is ZFS, you must update your initramfs every time this value changes:</p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">update-initramfs -u</span><br></pre></td></tr></table></figure>
+<p>You <strong>must reboot</strong> to activate these changes.</p>
+<h1 id="Managing-VMs"><a href="#Managing-VMs" class="headerlink" title="Managing VMs"></a>Managing VMs</h1><h2 id="Uploading-Disks"><a href="#Uploading-Disks" class="headerlink" title="Uploading Disks"></a>Uploading Disks</h2><p>Upload the image file to <code>local</code> storage, and the target file should be at <code>/var/lib/vz/template/iso/[IMAGE].img</code>. Import the disk image using this command:</p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">qm importdisk [VMID] /var/lib/vz/template/iso/[IMAGE].img local-lvm</span><br></pre></td></tr></table></figure>
+<h2 id="Managing-Backups"><a href="#Managing-Backups" class="headerlink" title="Managing Backups"></a>Managing Backups</h2><p>All backups are stored at <code>/var/lib/vz/dump/</code> folder.</p>
+<p>Custom storage folders are listed at <code>Datacenter - Storage - Path/Target</code>.</p>
+]]></content>
+      <categories>
+        <category>Self Hosted</category>
+        <category>Home Lab</category>
+      </categories>
+      <tags>
+        <tag>Home Lab</tag>
+        <tag>Virtual Machine</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>Home Lab (1) · RouterOS, OpenWrt and PiHole</title>
+    <url>/post/Self-Hosted/Home-Lab/home-lab-1-%C2%B7-routeros-openwrt-and-pihole/</url>
+    <content><![CDATA[<p>因为实在受不了 <a href="https://www.pfsense.org/">pfSense</a> 开机太慢而且 WebUI 巨卡<sup> [1] </sup>, 和一些 DNS 设置奇奇怪怪的问题, 终于下定决心把主路由给换了. 调研使用了一波以后, 发现还是 <a href="https://mikrotik.com/download">RouterOS</a> 可以比较相对<strong>简单</strong>地实现需求 (well, ROS 以复杂出名.. but<sup> [2] </sup>), 那正好开坑写一个系列, 重组内网服务器.</p>
+<ol>
+<li>虽说把 pfSense 给换了, 但是有一说一这是一个相对完善的路由系统 (而且本身就是防火墙系统), 首先他有内置的 DNS 解析服务, 还有非常好用的 DHCP 静态分配, 可以给每一个主机指定单独的 DNS 服务器和 Gateway, 这样可以把一些奇怪的职责解耦到不同的旁路由上<sup> [3] </sup>, 然后对设备终端也是非侵入的. 可能以后如果需要对外暴露服务的话我还得把这个防火墙请回来..</li>
+<li>跑通 ROS 其实不复杂… 网上那么多教程, 或者跟着官方 <a href="https://help.mikrotik.com/docs/display/ROS/First+Time+Configuration">Getting Started</a> 几分钟就行了. 主要是高级设置, 或者说中级功能没有其他路由系统直观, 要实现高级功能反而还是好用的 (用到在学嘛), 而且官方文档很全面.</li>
+<li>虽说在 DHCP Static 上指定 Gateway 不用单独每个终端设备去设置, 但是导致服务器之间耦合在一起了, 如果某个服务挂了其实并不能简单快速地恢复. 所以这次的目标就是用好 ROS 的监听, 让主路由可以独立完成所有任务, 然后其他花里胡哨的功能外挂去做, 这些服务挂了可以自动切回 ROS 维持基本需求. 说不定哪天墙塌了, 我直接把旁路由一关! …</li>
+</ol>
+<a id="more"></a>
+<p>前言说完了, 开整.</p>
+<p><img src="/post/Self-Hosted/Home-Lab/home-lab-1-%C2%B7-routeros-openwrt-and-pihole/network.drawio.png" alt="network.drawio"></p>
+<h1 id="系统安装"><a href="#系统安装" class="headerlink" title="系统安装"></a>系统安装</h1><p>咱系统都装在 PVE 上, 方便备份和迁移. 之前装 PVE 的时候正好写了些备忘录, 那就把上一篇作为第 0 期呗.</p>
+<p>物理机做路由器最少只需要两个网口, 一个做 WAN 口, 一个做 LAN 口就够了.</p>
+<p><img src="/post/Self-Hosted/Home-Lab/home-lab-1-%C2%B7-routeros-openwrt-and-pihole/image-20220815234544284.png" alt="PVE Bridges"></p>
+<p>然后, 从 RouterOS 官方下载 <a href="https://mikrotik.com/download">Cloud Hosted Router</a>, 选 Raw disk image, 之后上传到 PVE. 这里简单说下怎么在 PVE 导入原盘, 之后 OpenWrt 和其他一些原盘安装都是一样的.</p>
+<p>首先按正常操作新建虚拟机, 但不需要使用任何介质. 按照想要的配置一直下一步, 直接创建机器, 然后就会在硬件里看到初始分配的磁盘, 把这块盘分离并删除.</p>
+<p><img src="/post/Self-Hosted/Home-Lab/home-lab-1-%C2%B7-routeros-openwrt-and-pihole/image-20220815235401315.png" alt="image-20220815235401315"></p>
+<p>然后导入原盘, 使用命令</p>
+<figure class="highlight sh"><table><tr><td class="code"><pre><span class="line">qm importdisk 100 /mnt/pve/disk/template/iso/ros-chr.img local-zfs</span><br></pre></td></tr></table></figure>
+<p>其中, 100 是虚拟机的 ID, 然后是上传镜像的路径, 最后是存储位置, 这两项可以在 <code>数据中心/存储</code> 选项里看到.</p>
+<p><img src="/post/Self-Hosted/Home-Lab/home-lab-1-%C2%B7-routeros-openwrt-and-pihole/image-20220815235804365.png" alt="image-20220815235804365"></p>
+<p>然后还是在硬件里, 双击未使用的磁盘, 给他添加上去.</p>
+<p><img src="/post/Self-Hosted/Home-Lab/home-lab-1-%C2%B7-routeros-openwrt-and-pihole/image-20220816000027925.png" alt="image-20220816000027925"></p>
+<p>添加完以后, 可以根据需要扩容.</p>
+<p><img src="/post/Self-Hosted/Home-Lab/home-lab-1-%C2%B7-routeros-openwrt-and-pihole/image-20220816000106292.png" alt="image-20220816000106292"></p>
+<p>另外因为路由器需要俩网口, 而创建虚拟机的时候只能分配一个, 所以现在给他添加一个.</p>
+<p><img src="/post/Self-Hosted/Home-Lab/home-lab-1-%C2%B7-routeros-openwrt-and-pihole/image-20220816000216607.png" alt="image-20220816000216607"></p>
+<p>BTW, ROS 和 OP 都是支持 QEMU Guest Agent 的, 所以可以给他打开.</p>
+<p>已经结束啦! <strong>调整引导顺序</strong>, 开机就行了.</p>
+<h1 id="基础配置"><a href="#基础配置" class="headerlink" title="基础配置"></a>基础配置</h1><p>不想重复造轮子了, TLDR, RouterOS 的安装可以看官方的 <a href="https://help.mikrotik.com/docs/display/ROS/First+Time+Configuration">Getting Started</a> 或者<a href="https://www.youtube.com/watch?v=h6K5FThk-T4">这个视频</a>, 总之, 最后的配置要点是:</p>
+<p>俩网卡 (多 LAN 口用网桥)</p>
+<p><img src="/post/Self-Hosted/Home-Lab/home-lab-1-%C2%B7-routeros-openwrt-and-pihole/image-20220818025549007.png" alt="image-20220818025549007"></p>
+<p>做一层 NAT</p>
+<p><img src="/post/Self-Hosted/Home-Lab/home-lab-1-%C2%B7-routeros-openwrt-and-pihole/image-20220818034027308.png" alt="image-20220818034027308"></p>
+<p>分配 DHCP</p>
+<p><img src="/post/Self-Hosted/Home-Lab/home-lab-1-%C2%B7-routeros-openwrt-and-pihole/image-20220818030038704.png" alt="image-20220818030038704"></p>
+<p><img src="/post/Self-Hosted/Home-Lab/home-lab-1-%C2%B7-routeros-openwrt-and-pihole/image-20220818030130824.png" alt="image-20220818030130824"></p>
+<p>接下来可以配合旁路由使用了. OpenWrt 可以直接用 <a href="https://drive.google.com/drive/folders/1ktbDgnnP8pTMERjpPuETNphzAjNA6hZ2">eSir 的旁路由固件</a>, 安装方法可以看<a href="https://www.youtube.com/watch?v=e4IAZdAZ60w">他自己的视频</a>. </p>
+<h1 id="科学上网"><a href="#科学上网" class="headerlink" title="科学上网"></a>科学上网</h1><p>首先, 必须弄好科学上网! 先在旁路由做好代理, 然后在 ROS 添加一条分流, 可以自己配置需要匹配的项目, 如 IP 地址等.</p>
+<div><div class="fold_hider"><div class="close hider_title">分流方法已折叠,&ensp;推荐还是使用网关<p></p>
+</div></div><div class="fold">
+<p><img src="/post/Self-Hosted/Home-Lab/home-lab-1-%C2%B7-routeros-openwrt-and-pihole/image-20220818035128139.png" alt="image-20220818035128139"></p>
+<p>Mark 的是啥 routing 呢? 就是 Gateway 到旁路由</p>
+<p><img src="/post/Self-Hosted/Home-Lab/home-lab-1-%C2%B7-routeros-openwrt-and-pihole/image-20220818035949475.png" alt="image-20220818035949475"></p>
+<p>然后呢, 就可以用到 ROS 的 Netwatch, 旁路由挂了自动屏蔽这条路由. ROS 改配置超级快, 不用重载秒生效, 无敌</p>
+<p><img src="/post/Self-Hosted/Home-Lab/home-lab-1-%C2%B7-routeros-openwrt-and-pihole/image-20220818221409673.png" alt="image-20220818221409673"></p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line"># on up</span><br><span class="line">&#x2F;ip firewall mangle enable number&#x3D;4</span><br><span class="line"></span><br><span class="line"># on down</span><br><span class="line">&#x2F;ip firewall mangle disable number&#x3D;4</span><br></pre></td></tr></table></figure>
+<p>必须要说, 这个方法目前有俩问题, 从我的注释上就能看出来:</p>
+<ol>
+<li>现在是全局代理, 只要去了旁路由, 就必须过代理, 如果不过代理, 从网关回来, 又会被打回去… 这个问题有两个解, <ul>
+<li>一种是破掉这个环, 比如说旁路由的网关不是这个 ROS? 或者得有办法分辨这个回来的流量, 试了下没通, 还在想咋搞</li>
+<li>另外一种就是流控在 ROS 做, 导入 China IP / GFW List, 但是这个东西 OpenWrt 上都有现成的轮子, 懒得再弄一遍</li>
+</ul>
+</li>
+<li>似乎只能 TCP, UDP 不通, 我还没仔细看, 不重要不紧急 (或许重要?) 先暂时不管了</li>
+</ol>
+
+</div></div>
+<p>折腾半天还是传统的网关模式结构比较正常.. 要点就是, 设备的网关指向旁路由, 然后旁路由再绕回主路由:</p>
+<p><img src="/post/Self-Hosted/Home-Lab/home-lab-1-%C2%B7-routeros-openwrt-and-pihole/image-20220819011225786.png" alt="image-20220819011225786"></p>
+<p><img src="/post/Self-Hosted/Home-Lab/home-lab-1-%C2%B7-routeros-openwrt-and-pihole/image-20220819011547074.png" alt="image-20220819011547074"></p>
+<p>这样的话就可以在旁路由上配置代理策略了</p>
+<p><img src="/post/Self-Hosted/Home-Lab/home-lab-1-%C2%B7-routeros-openwrt-and-pihole/image-20220819011712012.png" alt="image-20220819011712012"></p>
+<p>好了, 用上 ROS 强大的 Netwatch, OpenWrt 挂了把网关自动改回 ROS.</p>
+<p><img src="/post/Self-Hosted/Home-Lab/home-lab-1-%C2%B7-routeros-openwrt-and-pihole/image-20220819011957553.png" alt="image-20220819011957553"></p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line"># on up</span><br><span class="line">&#x2F;ip dhcp-server network set 0 gateway&#x3D;&quot;10.10.1.2&quot;</span><br><span class="line"></span><br><span class="line"># on down</span><br><span class="line">&#x2F;ip dhcp-server network set 0 gateway&#x3D;&quot;10.10.1.1&quot;</span><br></pre></td></tr></table></figure>
+<p>OK, 这样只有最后一点小问题了, 那就是 Netwatch 的 simple type 用的是 ping, 那就会出现梯子挂了 ping 路由器还是通的情况. 不过这个很好办, 自己写一个脚本测一下 Google 通不通就行了, Netwatch 可以用 http code 等方法判断的. 比如可以这样:</p>
+<p><img src="/post/Self-Hosted/Home-Lab/home-lab-1-%C2%B7-routeros-openwrt-and-pihole/image-20220819012132099.png" alt="image-20220819012132099"></p>
+<h1 id="DNS-服务"><a href="#DNS-服务" class="headerlink" title="DNS 服务"></a>DNS 服务</h1><p>ROS 也有非常好用的 DNS 缓存功能, 但是在墙内走 UDP 协议总有被劫持的情况. 而因为旁路由是带梯子的, 而且可以比较方便地配置 DoH/DoT, 所以可以直接在墙外拿到无污染的 DNS, 对 GFW DNS 劫持说不! 当然如果旁路由挂了, 下面这个脚本也会自动给上游 DNS 切回来.</p>
+<p><img src="/post/Self-Hosted/Home-Lab/home-lab-1-%C2%B7-routeros-openwrt-and-pihole/image-20220819001629298.png" alt="image-20220819001629298"></p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line"># on up</span><br><span class="line">:local dns &quot;10.10.1.2&quot;</span><br><span class="line">&#x2F;ip dns set servers&#x3D;$dns</span><br><span class="line"></span><br><span class="line"># on down</span><br><span class="line">:local dns &quot;114.114.114.114, 114.114.115.115&quot;</span><br><span class="line">&#x2F;ip dns set servers&#x3D;$dns</span><br></pre></td></tr></table></figure>
+<p>顺便提一下, 我也装了 PiHole, 懒得单独开一篇了, 一起说了吧, PiHole 装好以后, 他的上游 DNS 设置为 ROS, 因为我在 ROS 里设置了本地 DNS 解析记录 (虽然 PiHole 也可以设置 Local DNS, 不过咱们说了要把主体服务全部控制在主路由, 这样以后说不定秒换 AdGuard 呢).</p>
+<p><img src="/post/Self-Hosted/Home-Lab/home-lab-1-%C2%B7-routeros-openwrt-and-pihole/image-20220818041852965.png" alt="image-20220818041852965"></p>
+<p>然后, 同样是用 Netwatch 监控 PiHole, 如果挂了, DNS 服务器自动切回 ROS.</p>
+<p><img src="/post/Self-Hosted/Home-Lab/home-lab-1-%C2%B7-routeros-openwrt-and-pihole/image-20220818041942522.png" alt="image-20220818041942522"></p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line"># on up</span><br><span class="line">:local dns &quot;10.10.2.1, 10.10.2.1&quot;</span><br><span class="line">&#x2F;ip dhcp-server network set 0 dns-server&#x3D;$dns</span><br><span class="line"></span><br><span class="line"># on down</span><br><span class="line">:local dns &quot;10.10.1.1, 10.10.1.2&quot;</span><br><span class="line">&#x2F;ip dhcp-server network set 0 dns-server&#x3D;$dns</span><br></pre></td></tr></table></figure>
+<p>哦对了, 如果你按照官方的 <a href="https://help.mikrotik.com/docs/display/ROS/Building+Your+First+Firewall">Building Your First Firewall</a> 配了防火墙, 记得关掉这一条, 它屏蔽了一些本地流量, 导致连接特别慢 :(</p>
+<p><img src="/post/Self-Hosted/Home-Lab/home-lab-1-%C2%B7-routeros-openwrt-and-pihole/image-20220819013456177.png" alt="image-20220819013456177"></p>
+<h1 id="Fullcone-NAT"><a href="#Fullcone-NAT" class="headerlink" title="Fullcone NAT"></a>Fullcone NAT</h1><p>最后相当于个备忘吧, ROS 里的 Masquerade NAT 似乎并没有对应到常用的几种 NAT 类型, 我自己测了下是显示 Fullcone 的, 不过还是抄了个似乎更 “full” 的配置:</p>
+<p><img src="/post/Self-Hosted/Home-Lab/home-lab-1-%C2%B7-routeros-openwrt-and-pihole/image-20220818043719258.png" alt="image-20220818043719258"></p>
+<p><img src="/post/Self-Hosted/Home-Lab/home-lab-1-%C2%B7-routeros-openwrt-and-pihole/image-20220818042525184.png" alt="image-20220818042525184"></p>
+<p>这里的 To Address 需要配置成 WAN 口的 IP 地址, 而这有可能是变动的, 所以祭出脚本和 Netwatch, 动态更新起来</p>
+<p><img src="/post/Self-Hosted/Home-Lab/home-lab-1-%C2%B7-routeros-openwrt-and-pihole/image-20220818042650487.png" alt="image-20220818042650487"></p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">:local wanPort [&#x2F;ip address find interface&#x3D;WAN]</span><br><span class="line">:local wanAddr [&#x2F;ip address get $wanPort address]</span><br><span class="line">:set wanAddr [:pick $wanAddr 0 ([len $wanAddr] - 3)]</span><br><span class="line">&#x2F;ip firewall nat set 1 to-address&#x3D;$wanAddr</span><br></pre></td></tr></table></figure>
+<p>我是用 Netwatch 造了一个定时任务, 这样就会动态更新啦</p>
+<p><img src="/post/Self-Hosted/Home-Lab/home-lab-1-%C2%B7-routeros-openwrt-and-pihole/image-20220818042740297.png" alt="image-20220818042740297"></p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">&#x2F;system script run fullcone_nat_script</span><br></pre></td></tr></table></figure>
+]]></content>
+      <categories>
+        <category>Self Hosted</category>
+        <category>Home Lab</category>
+      </categories>
+      <tags>
+        <tag>Home Lab</tag>
+        <tag>Router</tag>
+        <tag>DNS</tag>
+        <tag>GFW</tag>
+        <tag>RouterOS</tag>
+        <tag>OpenWrt</tag>
+        <tag>PiHole</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>Git · Delete Commits</title>
+    <url>/post/Programming/Git/git-%C2%B7-delete-commits/</url>
+    <content><![CDATA[<p><strong>Removing an entire commit</strong></p>
+<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">git rebase -p --onto SHA^ SHA</span><br></pre></td></tr></table></figure>
+<p>Obviously replace <code>SHA</code> with the reference you want to get rid of. The <code>^</code> in that command is literal.</p>
+<a id="more"></a>
+<p><br></p>
+<h4 id="Rebase"><a href="#Rebase" class="headerlink" title="Rebase"></a>Rebase</h4><p>First, find out how far back that commit is (approximately). Then do:</p>
+<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">git rebase -i HEAD~N</span><br></pre></td></tr></table></figure>
+<p>The <code>~N</code> means rebase the last <code>N</code> commits (<code>N</code> must be a number, for example <code>HEAD~10</code>).</p>
+<p>Then, you can edit the file that Git presents to you to delete the offending commit. On saving that file, Git will then rewrite all the following commits as if the one you deleted didn’t exist.</p>
+<p><br></p>
+<h4 id="Reset"><a href="#Reset" class="headerlink" title="Reset"></a>Reset</h4><p>Assuming you are sitting on that commit, then this command will wack it:</p>
+<figure class="highlight sh"><table><tr><td class="code"><pre><span class="line">git reset --hard HEAD~1</span><br></pre></td></tr></table></figure>
+<p>The <code>HEAD~1</code> means the commit before head.</p>
+<p>If you want to keep your work and just <em>undo</em> that commit command:</p>
+<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">git reset --soft HEAD~1</span><br></pre></td></tr></table></figure>
+<p>Or, you could look at the output of <code>git log</code>, find the commit id of the commit you want to back up to:</p>
+<figure class="highlight sh"><table><tr><td class="code"><pre><span class="line">git reset --hard &lt;sha1-commit-id&gt;</span><br></pre></td></tr></table></figure>
+<p>If you already pushed it, you will need to do a force push to get rid of it.</p>
+<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">git push origin HEAD --force</span><br></pre></td></tr></table></figure>
+]]></content>
+      <categories>
+        <category>Programming</category>
+        <category>Git</category>
+      </categories>
+      <tags>
+        <tag>Git</tag>
+        <tag>GitHub</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>Python · Anaconda Tutorial</title>
+    <url>/post/Programming/Python/python-%C2%B7-anaconda-tutorial/</url>
+    <content><![CDATA[<p>这里只列出了部分基础操作命令。<br><br></p>
+<h3 id="环境管理"><a href="#环境管理" class="headerlink" title="环境管理"></a>环境管理</h3><ol>
+<li><strong>查看所有环境</strong><figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">conda env list</span><br></pre></td></tr></table></figure>
+或者使用命令<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">conda info --envs</span><br></pre></td></tr></table></figure></li>
+<li><strong>创建环境</strong><figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">conda create --name your_env_name</span><br></pre></td></tr></table></figure>
+或者使用命令<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">conda create -n your_env_name</span><br></pre></td></tr></table></figure>
+指定 Python 版本和安装包<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">conda create -n your_env_name python=3.5 numpy pandas</span><br></pre></td></tr></table></figure>
+克隆一部分旧的环境<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">conda create -n your_env_name --<span class="built_in">clone</span> oldname</span><br></pre></td></tr></table></figure>
+<a id="more"></a></li>
+<li><strong>启用环境</strong><figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">conda activate your_env_name</span><br></pre></td></tr></table></figure>
+或者使用命令<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">activate your_env_name</span><br></pre></td></tr></table></figure></li>
+<li><strong>停用环境</strong><figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">conda deactivate</span><br></pre></td></tr></table></figure></li>
+<li><strong>删除环境</strong><figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">conda remove -n your_env_name --all</span><br></pre></td></tr></table></figure></li>
+<li><strong>导出环境配置</strong><figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">conda env <span class="built_in">export</span> &gt; environment.yml</span><br></pre></td></tr></table></figure>
+跨平台导出环境可能会报错 <code>ResolvePackageNotFound</code> 可以尝试<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">conda env <span class="built_in">export</span> --no-builds &gt; environment.yml</span><br></pre></td></tr></table></figure></li>
+<li><strong>根据配置文件生成环境</strong><figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">conda env create -f environment.yml</span><br></pre></td></tr></table></figure></li>
+<li><strong>根据配置文件升级环境</strong><figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">conda env update --name root --file environment.yml</span><br></pre></td></tr></table></figure>
+<br></li>
+</ol>
+<h3 id="包管理"><a href="#包管理" class="headerlink" title="包管理"></a>包管理</h3><ol>
+<li><strong>列举包</strong><figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">conda list</span><br></pre></td></tr></table></figure>
+指定某个包<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">conda list -n packagename</span><br></pre></td></tr></table></figure></li>
+<li><strong>安装包</strong><figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">conda install packagename</span><br></pre></td></tr></table></figure>
+指定某个环境<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">conda install -n envname</span><br></pre></td></tr></table></figure></li>
+<li><strong>更新包</strong><figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">conda update packagename</span><br></pre></td></tr></table></figure>
+指定某个环境<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">conda update -n envname packagename</span><br></pre></td></tr></table></figure></li>
+<li><strong>删除包</strong><figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">conda remove packagename</span><br></pre></td></tr></table></figure>
+指定某个环境<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">conda remove -n envname</span><br></pre></td></tr></table></figure></li>
+<li><strong>更新 conda、anaconda、python</strong><figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">conda update conda</span><br><span class="line">conda update anaconda</span><br><span class="line">conda update python</span><br></pre></td></tr></table></figure>
+指定 Python 版本<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">conda install python=3.6</span><br></pre></td></tr></table></figure></li>
+</ol>
+]]></content>
+      <categories>
+        <category>Programming</category>
+        <category>Python</category>
+      </categories>
+      <tags>
+        <tag>Anaconda</tag>
+        <tag>Python</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>Home Lab (2) · OPNsense and High Availability</title>
+    <url>/post/Self-Hosted/Home-Lab/home-lab-2-%C2%B7-opnsense-and-high-availability/</url>
+    <content><![CDATA[<h1 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h1><p>前面说到, 换到 RouterOS 确实系统启动快了非常多, 资源消耗也非常小, 但是又引出了几个新的痛点…</p>
+<ol>
+<li>ROS 的界面实在是不直观, 高情商: 专业, 低情商: 难看. 维护的过程中给自己增加了难度.</li>
+<li>ROS 的 DHCP 不能指定网关, 只能用 magle 标记做透明代理, 而不直观的问题又增加了配置和排查的难度 :(</li>
+</ol>
+<p>此外感觉网络拓扑整的太复杂并没有什么卵用, 还是应该用奥卡姆剃刀剃一下, 这样出问题也好排查.</p>
+<p>看了半天还是决定用主路由 OPNsense + 旁路由 OpenClash 分流. 主路由经过试用, OPNsense 似乎有更好的响应速度和易用性, 所以就用它踢掉 pfSense. OPNsense 有全面的 <a href="https://docs.opnsense.org/development/api.html#api-reference">API 接口</a> , 方便做一些自动化的开发, 也不需要学 ROS 的语法.</p>
+<p>而且, OPNsense有非常好看的前端界面!</p>
+<a id="more"></a>
+<p><img src="/post/Self-Hosted/Home-Lab/home-lab-2-%C2%B7-opnsense-and-high-availability/Xnip2022-11-27_02-59-53.png" alt="Xnip2022-11-27_02-59-53"></p>
+<h1 id="安装"><a href="#安装" class="headerlink" title="安装"></a>安装</h1><p>安装 OPNsense 相对比较简单, 需要注意的是 CPU 最好手动打开 AES 支持.</p>
+<p><img src="/post/Self-Hosted/Home-Lab/home-lab-2-%C2%B7-opnsense-and-high-availability/Xnip2022-11-27_11-17-29.png" alt="Xnip2022-11-27_11-17-29"></p>
+<p>试用后我决定分配 16G 硬盘, 轻度使用并不需要超大容量, 我也不希望主路由跑一堆服务, 整的很复杂也很慢. ( 事实上第一次安装选了 64G, 实在太大了, 一方面占用我的 ssd, 另外快照时间也很长. 不过要夸赞下 OPNsense 的备份和高可用, 配置可以无缝切换! ) PVE 用光盘安装, 上游有 DHCP 的话, OPNsense 可以自动识别 LAN 和 WAN, 并分配 IP, 直到这个界面:</p>
+<p><img src="/post/Self-Hosted/Home-Lab/home-lab-2-%C2%B7-opnsense-and-high-availability/Xnip2022-11-27_01-21-24.png" alt="Xnip2022-11-27_01-21-24"></p>
+<p>用户 <code>installer</code> , 密码 <code>opnsense</code> , 进入安装程序. 对于文件系统, 我倾向于使用 UFS, 因为它有更好的性能. 而 ZFS, 首先我的 PVE 就用了 ZFS 文件系统, 其次, 对于文件损坏, 虚拟机可以直接快照回滚. 所以感觉不值得做出额外的内存和速度开销.</p>
+<p><img src="/post/Self-Hosted/Home-Lab/home-lab-2-%C2%B7-opnsense-and-high-availability/Xnip2022-11-27_01-33-53.png" alt="Xnip2022-11-27_01-33-53"></p>
+<h1 id="配置"><a href="#配置" class="headerlink" title="配置"></a>配置</h1><p>安装完成后, root 用户的默认密码也是 <code>opnsense</code> . 既然我是已经安装完了, 就说下配置备份和转移的方法吧.</p>
+<p><img src="/post/Self-Hosted/Home-Lab/home-lab-2-%C2%B7-opnsense-and-high-availability/Xnip2022-11-27_02-09-54-9488675.png" alt="Xnip2022-11-27_02-09-54"></p>
+<p>我是同时运行了新旧两个虚拟机实例以保证折腾过程中互联网的可用性, 为了保证配置正常, 我还是下载了一份 xml 文件, 在 Backups tab restore. 恢复速度非常快, 几秒钟, 重启以后就 ok 了. 重启切换过程中关闭旧的实例, 这样服务不可用可以做到秒级. 如果之前有安装插件包的话, 在 Firmware tab 下有详细列出缺少的插件, 装回来以后配置也会自动恢复.</p>
+<p><img src="/post/Self-Hosted/Home-Lab/home-lab-2-%C2%B7-opnsense-and-high-availability/Xnip2022-11-27_01-59-54.png" alt="Xnip2022-11-27_01-59-54"></p>
+<p>如果是新安装的话, 也需要在这里安装各类插件. 首先就是 dark mode! 几个主题都试用过以后, 我还是选择了这个 cicada theme, 下载后在 Settings/General 配置主题即可. 此外, 因为运行在虚拟机中, 我们需要 VMware tools, 和 QEMU GA. UPNP 我装了, 不过还没有测试可用性和稳定性, 这篇暂时不说.</p>
+<p><img src="/post/Self-Hosted/Home-Lab/home-lab-2-%C2%B7-opnsense-and-high-availability/Xnip2022-11-27_02-16-51.png" alt="Xnip2022-11-27_02-16-51"></p>
+<p>下面写一下系统基础配置的简介.</p>
+<h3 id="System"><a href="#System" class="headerlink" title="System"></a>System</h3><h4 id="Settings"><a href="#Settings" class="headerlink" title="Settings"></a>Settings</h4><p>非常重要的一点, DNS Servers 请留空, 让系统请求自身的 DNS 服务器 (默认是 Unbound DNS). 这样可以实现纯净的 DoT/DoH, 这项稍后说.</p>
+<p><img src="/post/Self-Hosted/Home-Lab/home-lab-2-%C2%B7-opnsense-and-high-availability/Xnip2022-11-27_02-36-42.png" alt="Xnip2022-11-27_02-36-42"></p>
+<h3 id="Interface"><a href="#Interface" class="headerlink" title="Interface"></a>Interface</h3><h4 id="WAN"><a href="#WAN" class="headerlink" title="WAN"></a>WAN</h4><p>对于 WAN 口, 根据自己的连接方式选择 DHCP / PPPoE.</p>
+<h4 id="LAN"><a href="#LAN" class="headerlink" title="LAN"></a>LAN</h4><p>LAN 口的话, IPv4选静态 IP, IPv6 选跟踪上游就行, 其他的配置可以看个人喜好配置.<br><img src="/post/Self-Hosted/Home-Lab/home-lab-2-%C2%B7-opnsense-and-high-availability/Xnip2022-11-27_02-30-07.png" alt="Xnip2022-11-27_02-30-07"></p>
+<h3 id="Services"><a href="#Services" class="headerlink" title="Services"></a>Services</h3><h4 id="DHCPv4"><a href="#DHCPv4" class="headerlink" title="DHCPv4"></a>DHCPv4</h4><p>这里, 可以设置默认的 DNS Server 和 Gateway 为本机, 之后在静态分配时可以指定为旁路由地址, 实现按需分流.</p>
+<p><img src="/post/Self-Hosted/Home-Lab/home-lab-2-%C2%B7-opnsense-and-high-availability/image-20221127024232492.png" alt="image-20221127024232492"></p>
+<p>创建静态分配点加号即可, IP Address, DNS Servers, Gateway, Domain Name 等等都可以单独指定.</p>
+<h4 id="Unbound-DNS"><a href="#Unbound-DNS" class="headerlink" title="Unbound DNS"></a>Unbound DNS</h4><p>TBD</p>
+<h1 id="高可用"><a href="#高可用" class="headerlink" title="高可用"></a>高可用</h1>]]></content>
+      <categories>
+        <category>Self Hosted</category>
+        <category>Home Lab</category>
+      </categories>
+      <tags>
+        <tag>Home Lab</tag>
+        <tag>Router</tag>
+        <tag>DNS</tag>
+        <tag>RouterOS</tag>
+        <tag>OpenWrt</tag>
+        <tag>OPNsense</tag>
+      </tags>
+  </entry>
+</search>

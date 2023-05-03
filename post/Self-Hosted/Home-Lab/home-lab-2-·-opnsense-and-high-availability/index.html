@@ -1,0 +1,610 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 5.3.0">
+
+<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-6831136891340085"
+     crossorigin="anonymous"></script>
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/tag.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/tag.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/tag.png">
+  <link rel="mask-icon" href="/images/tag.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+<link rel="stylesheet" href="//fonts.googleapis.com/css?family=Noto Sans SC:300,300italic,400,400italic,700,700italic|Encode Sans:300,300italic,400,400italic,700,700italic|M PLUS 1p:300,300italic,400,400italic,700,700italic|Mulish:300,300italic,400,400italic,700,700italic|Oxygen Mono:300,300italic,400,400italic,700,700italic&display=swap&subset=latin,latin-ext">
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+  <link rel="stylesheet" href="/lib/pace/pace-theme-minimal.min.css">
+  <script src="/lib/pace/pace.min.js"></script>
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"www.bugstop.cc","root":"/","scheme":"Pisces","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":true,"show_result":false,"style":"flat"},"back2top":{"enable":true,"sidebar":true,"scrollpercent":true},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="前言前面说到, 换到 RouterOS 确实系统启动快了非常多, 资源消耗也非常小, 但是又引出了几个新的痛点…  ROS 的界面实在是不直观, 高情商: 专业, 低情商: 难看. 维护的过程中给自己增加了难度. ROS 的 DHCP 不能指定网关, 只能用 magle 标记做透明代理, 而不直观的问题又增加了配置和排查的难度 :(  此外感觉网络拓扑整的太复杂并没有什么卵用, 还是应该用奥卡姆剃">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Home Lab (2) · OPNsense and High Availability">
+<meta property="og:url" content="https://www.bugstop.cc/post/Self-Hosted/Home-Lab/home-lab-2-%C2%B7-opnsense-and-high-availability/">
+<meta property="og:site_name" content="bugstop">
+<meta property="og:description" content="前言前面说到, 换到 RouterOS 确实系统启动快了非常多, 资源消耗也非常小, 但是又引出了几个新的痛点…  ROS 的界面实在是不直观, 高情商: 专业, 低情商: 难看. 维护的过程中给自己增加了难度. ROS 的 DHCP 不能指定网关, 只能用 magle 标记做透明代理, 而不直观的问题又增加了配置和排查的难度 :(  此外感觉网络拓扑整的太复杂并没有什么卵用, 还是应该用奥卡姆剃">
+<meta property="og:locale" content="en_US">
+<meta property="og:image" content="https://www.bugstop.cc/post/Self-Hosted/Home-Lab/home-lab-2-%C2%B7-opnsense-and-high-availability/Xnip2022-11-27_02-59-53.png">
+<meta property="og:image" content="https://www.bugstop.cc/post/Self-Hosted/Home-Lab/home-lab-2-%C2%B7-opnsense-and-high-availability/Xnip2022-11-27_11-17-29.png">
+<meta property="og:image" content="https://www.bugstop.cc/post/Self-Hosted/Home-Lab/home-lab-2-%C2%B7-opnsense-and-high-availability/Xnip2022-11-27_01-21-24.png">
+<meta property="og:image" content="https://www.bugstop.cc/post/Self-Hosted/Home-Lab/home-lab-2-%C2%B7-opnsense-and-high-availability/Xnip2022-11-27_01-33-53.png">
+<meta property="og:image" content="https://www.bugstop.cc/post/Self-Hosted/Home-Lab/home-lab-2-%C2%B7-opnsense-and-high-availability/Xnip2022-11-27_02-09-54-9488675.png">
+<meta property="og:image" content="https://www.bugstop.cc/post/Self-Hosted/Home-Lab/home-lab-2-%C2%B7-opnsense-and-high-availability/Xnip2022-11-27_01-59-54.png">
+<meta property="og:image" content="https://www.bugstop.cc/post/Self-Hosted/Home-Lab/home-lab-2-%C2%B7-opnsense-and-high-availability/Xnip2022-11-27_02-16-51.png">
+<meta property="og:image" content="https://www.bugstop.cc/post/Self-Hosted/Home-Lab/home-lab-2-%C2%B7-opnsense-and-high-availability/Xnip2022-11-27_02-36-42.png">
+<meta property="og:image" content="https://www.bugstop.cc/post/Self-Hosted/Home-Lab/home-lab-2-%C2%B7-opnsense-and-high-availability/Xnip2022-11-27_02-30-07.png">
+<meta property="og:image" content="https://www.bugstop.cc/post/Self-Hosted/Home-Lab/home-lab-2-%C2%B7-opnsense-and-high-availability/image-20221127024232492.png">
+<meta property="article:published_time" content="2022-11-26T17:26:03.000Z">
+<meta property="article:modified_time" content="2023-05-03T17:24:13.279Z">
+<meta property="article:author" content="Muhan Li">
+<meta property="article:tag" content="Home Lab">
+<meta property="article:tag" content="Router">
+<meta property="article:tag" content="DNS">
+<meta property="article:tag" content="RouterOS">
+<meta property="article:tag" content="OpenWrt">
+<meta property="article:tag" content="OPNsense">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://www.bugstop.cc/post/Self-Hosted/Home-Lab/home-lab-2-%C2%B7-opnsense-and-high-availability/Xnip2022-11-27_02-59-53.png">
+
+<link rel="canonical" href="https://www.bugstop.cc/post/Self-Hosted/Home-Lab/home-lab-2-%C2%B7-opnsense-and-high-availability/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'en'
+  };
+</script>
+
+  <title>Home Lab (2) · OPNsense and High Availability | bugstop</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="Toggle navigation bar">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">bugstop</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+      <p class="site-subtitle" itemprop="description">Tech Blog</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="far fa-window-maximize fa-fw"></i>Home</a>
+
+  </li>
+        <li class="menu-item menu-item-about">
+
+    <a href="/about/" rel="section"><i class="fas fa-quote-left fa-fw"></i>About</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fas fa-hashtag fa-fw"></i>Tags</a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/categories/" rel="section"><i class="fas fa-bars fa-fw"></i>Categories</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fas fa-inbox fa-fw"></i>Archives</a>
+
+  </li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>Search
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+        <div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off"
+           placeholder="Searching..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div id="search-result">
+  <div id="no-result">
+    <i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+</div>
+    </header>
+
+    
+
+  <a href="https://github.com/bugstop" class="github-corner" title="Follow me on GitHub" aria-label="Follow me on GitHub" rel="noopener" target="_blank"><svg width="80" height="80" viewBox="0 0 250 250" aria-hidden="true"><path d="M0,0 L115,115 L130,115 L142,142 L250,250 L250,0 Z"></path><path d="M128.3,109.0 C113.8,99.7 119.0,89.6 119.0,89.6 C122.0,82.7 120.5,78.6 120.5,78.6 C119.2,72.0 123.4,76.3 123.4,76.3 C127.3,80.9 125.5,87.3 125.5,87.3 C122.9,97.6 130.6,101.9 134.4,103.2" fill="currentColor" style="transform-origin: 130px 106px;" class="octo-arm"></path><path d="M115.0,115.0 C114.9,115.1 118.7,116.5 119.8,115.4 L133.7,101.6 C136.9,99.2 139.9,98.4 142.2,98.6 C133.8,88.0 127.5,74.4 143.8,58.0 C148.5,53.4 154.0,51.2 159.7,51.0 C160.3,49.4 163.2,43.6 171.4,40.1 C171.4,40.1 176.1,42.5 178.8,56.2 C183.1,58.6 187.2,61.8 190.9,65.4 C194.5,69.0 197.7,73.2 200.1,77.6 C213.8,80.2 216.3,84.9 216.3,84.9 C212.7,93.1 206.9,96.0 205.4,96.6 C205.1,102.4 203.0,107.8 198.3,112.5 C181.9,128.9 168.3,122.5 157.7,114.1 C157.9,116.9 156.7,120.9 152.7,124.9 L141.0,136.5 C139.8,137.7 141.6,141.9 141.8,141.8 Z" fill="currentColor" class="octo-body"></path></svg></a>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
+    <link itemprop="mainEntityOfPage" href="https://www.bugstop.cc/post/Self-Hosted/Home-Lab/home-lab-2-%C2%B7-opnsense-and-high-availability/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/lightball.png">
+      <meta itemprop="name" content="Muhan Li">
+      <meta itemprop="description" content="bugstop">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="bugstop">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          Home Lab (2) · OPNsense and High Availability
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+
+              <time title="Created: 11-27-2022 01:26:03" itemprop="dateCreated datePublished" datetime="2022-11-27T01:26:03+08:00">11-27-2022</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">Edited on</span>
+                <time title="Modified: 05-04-2023 01:24:13" itemprop="dateModified" datetime="2023-05-04T01:24:13+08:00">05-04-2023</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">In</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/Self-Hosted/" itemprop="url" rel="index"><span itemprop="name">Self Hosted</span></a>
+                </span>
+                  , 
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/Self-Hosted/Home-Lab/" itemprop="url" rel="index"><span itemprop="name">Home Lab</span></a>
+                </span>
+            </span>
+
+          
+            <span class="post-meta-item" title="Symbols count in article">
+              <span class="post-meta-item-icon">
+                <i class="far fa-file-word"></i>
+              </span>
+              <span>1.4k</span>
+            </span>
+            <span class="post-meta-item" title="Reading time">
+              <span class="post-meta-item-icon">
+                <i class="far fa-clock"></i>
+              </span>
+              <span>1 mins.</span>
+            </span>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <h1 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h1><p>前面说到, 换到 RouterOS 确实系统启动快了非常多, 资源消耗也非常小, 但是又引出了几个新的痛点…</p>
+<ol>
+<li>ROS 的界面实在是不直观, 高情商: 专业, 低情商: 难看. 维护的过程中给自己增加了难度.</li>
+<li>ROS 的 DHCP 不能指定网关, 只能用 magle 标记做透明代理, 而不直观的问题又增加了配置和排查的难度 :(</li>
+</ol>
+<p>此外感觉网络拓扑整的太复杂并没有什么卵用, 还是应该用奥卡姆剃刀剃一下, 这样出问题也好排查.</p>
+<p>看了半天还是决定用主路由 OPNsense + 旁路由 OpenClash 分流. 主路由经过试用, OPNsense 似乎有更好的响应速度和易用性, 所以就用它踢掉 pfSense. OPNsense 有全面的 <a target="_blank" rel="noopener" href="https://docs.opnsense.org/development/api.html#api-reference">API 接口</a> , 方便做一些自动化的开发, 也不需要学 ROS 的语法.</p>
+<p>而且, OPNsense有非常好看的前端界面!</p>
+<a id="more"></a>
+<p><img src="/post/Self-Hosted/Home-Lab/home-lab-2-%C2%B7-opnsense-and-high-availability/Xnip2022-11-27_02-59-53.png" alt="Xnip2022-11-27_02-59-53"></p>
+<h1 id="安装"><a href="#安装" class="headerlink" title="安装"></a>安装</h1><p>安装 OPNsense 相对比较简单, 需要注意的是 CPU 最好手动打开 AES 支持.</p>
+<p><img src="/post/Self-Hosted/Home-Lab/home-lab-2-%C2%B7-opnsense-and-high-availability/Xnip2022-11-27_11-17-29.png" alt="Xnip2022-11-27_11-17-29"></p>
+<p>试用后我决定分配 16G 硬盘, 轻度使用并不需要超大容量, 我也不希望主路由跑一堆服务, 整的很复杂也很慢. ( 事实上第一次安装选了 64G, 实在太大了, 一方面占用我的 ssd, 另外快照时间也很长. 不过要夸赞下 OPNsense 的备份和高可用, 配置可以无缝切换! ) PVE 用光盘安装, 上游有 DHCP 的话, OPNsense 可以自动识别 LAN 和 WAN, 并分配 IP, 直到这个界面:</p>
+<p><img src="/post/Self-Hosted/Home-Lab/home-lab-2-%C2%B7-opnsense-and-high-availability/Xnip2022-11-27_01-21-24.png" alt="Xnip2022-11-27_01-21-24"></p>
+<p>用户 <code>installer</code> , 密码 <code>opnsense</code> , 进入安装程序. 对于文件系统, 我倾向于使用 UFS, 因为它有更好的性能. 而 ZFS, 首先我的 PVE 就用了 ZFS 文件系统, 其次, 对于文件损坏, 虚拟机可以直接快照回滚. 所以感觉不值得做出额外的内存和速度开销.</p>
+<p><img src="/post/Self-Hosted/Home-Lab/home-lab-2-%C2%B7-opnsense-and-high-availability/Xnip2022-11-27_01-33-53.png" alt="Xnip2022-11-27_01-33-53"></p>
+<h1 id="配置"><a href="#配置" class="headerlink" title="配置"></a>配置</h1><p>安装完成后, root 用户的默认密码也是 <code>opnsense</code> . 既然我是已经安装完了, 就说下配置备份和转移的方法吧.</p>
+<p><img src="/post/Self-Hosted/Home-Lab/home-lab-2-%C2%B7-opnsense-and-high-availability/Xnip2022-11-27_02-09-54-9488675.png" alt="Xnip2022-11-27_02-09-54"></p>
+<p>我是同时运行了新旧两个虚拟机实例以保证折腾过程中互联网的可用性, 为了保证配置正常, 我还是下载了一份 xml 文件, 在 Backups tab restore. 恢复速度非常快, 几秒钟, 重启以后就 ok 了. 重启切换过程中关闭旧的实例, 这样服务不可用可以做到秒级. 如果之前有安装插件包的话, 在 Firmware tab 下有详细列出缺少的插件, 装回来以后配置也会自动恢复.</p>
+<p><img src="/post/Self-Hosted/Home-Lab/home-lab-2-%C2%B7-opnsense-and-high-availability/Xnip2022-11-27_01-59-54.png" alt="Xnip2022-11-27_01-59-54"></p>
+<p>如果是新安装的话, 也需要在这里安装各类插件. 首先就是 dark mode! 几个主题都试用过以后, 我还是选择了这个 cicada theme, 下载后在 Settings/General 配置主题即可. 此外, 因为运行在虚拟机中, 我们需要 VMware tools, 和 QEMU GA. UPNP 我装了, 不过还没有测试可用性和稳定性, 这篇暂时不说.</p>
+<p><img src="/post/Self-Hosted/Home-Lab/home-lab-2-%C2%B7-opnsense-and-high-availability/Xnip2022-11-27_02-16-51.png" alt="Xnip2022-11-27_02-16-51"></p>
+<p>下面写一下系统基础配置的简介.</p>
+<h3 id="System"><a href="#System" class="headerlink" title="System"></a>System</h3><h4 id="Settings"><a href="#Settings" class="headerlink" title="Settings"></a>Settings</h4><p>非常重要的一点, DNS Servers 请留空, 让系统请求自身的 DNS 服务器 (默认是 Unbound DNS). 这样可以实现纯净的 DoT/DoH, 这项稍后说.</p>
+<p><img src="/post/Self-Hosted/Home-Lab/home-lab-2-%C2%B7-opnsense-and-high-availability/Xnip2022-11-27_02-36-42.png" alt="Xnip2022-11-27_02-36-42"></p>
+<h3 id="Interface"><a href="#Interface" class="headerlink" title="Interface"></a>Interface</h3><h4 id="WAN"><a href="#WAN" class="headerlink" title="WAN"></a>WAN</h4><p>对于 WAN 口, 根据自己的连接方式选择 DHCP / PPPoE.</p>
+<h4 id="LAN"><a href="#LAN" class="headerlink" title="LAN"></a>LAN</h4><p>LAN 口的话, IPv4选静态 IP, IPv6 选跟踪上游就行, 其他的配置可以看个人喜好配置.<br><img src="/post/Self-Hosted/Home-Lab/home-lab-2-%C2%B7-opnsense-and-high-availability/Xnip2022-11-27_02-30-07.png" alt="Xnip2022-11-27_02-30-07"></p>
+<h3 id="Services"><a href="#Services" class="headerlink" title="Services"></a>Services</h3><h4 id="DHCPv4"><a href="#DHCPv4" class="headerlink" title="DHCPv4"></a>DHCPv4</h4><p>这里, 可以设置默认的 DNS Server 和 Gateway 为本机, 之后在静态分配时可以指定为旁路由地址, 实现按需分流.</p>
+<p><img src="/post/Self-Hosted/Home-Lab/home-lab-2-%C2%B7-opnsense-and-high-availability/image-20221127024232492.png" alt="image-20221127024232492"></p>
+<p>创建静态分配点加号即可, IP Address, DNS Servers, Gateway, Domain Name 等等都可以单独指定.</p>
+<h4 id="Unbound-DNS"><a href="#Unbound-DNS" class="headerlink" title="Unbound DNS"></a>Unbound DNS</h4><p>TBD</p>
+<h1 id="高可用"><a href="#高可用" class="headerlink" title="高可用"></a>高可用</h1>
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/Home-Lab/" rel="tag"># Home Lab</a>
+              <a href="/tags/Router/" rel="tag"># Router</a>
+              <a href="/tags/DNS/" rel="tag"># DNS</a>
+              <a href="/tags/RouterOS/" rel="tag"># RouterOS</a>
+              <a href="/tags/OpenWrt/" rel="tag"># OpenWrt</a>
+              <a href="/tags/OPNsense/" rel="tag"># OPNsense</a>
+          </div>
+
+        <div style="margin-top:25px">
+  <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-6831136891340085"
+      crossorigin="anonymous"></script>
+  <ins class="adsbygoogle"
+      style="display:block"
+      data-ad-format="autorelaxed"
+      data-ad-client="ca-pub-6831136891340085"
+      data-ad-slot="3399378287"></ins>
+  <script>
+      (adsbygoogle = window.adsbygoogle || []).push({});
+  </script>
+</div>
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/post/Self-Hosted/Home-Lab/home-lab-1-%C2%B7-routeros-openwrt-and-pihole/" rel="prev" title="Home Lab (1) · RouterOS, OpenWrt and PiHole">
+      <i class="fa fa-chevron-left"></i> Home Lab (1) · RouterOS, OpenWrt and PiHole
+    </a></div>
+      <div class="post-nav-item"></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          Table of Contents
+        </li>
+        <li class="sidebar-nav-overview">
+          Overview
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#%E5%89%8D%E8%A8%80"><span class="nav-number">1.</span> <span class="nav-text">前言</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E5%AE%89%E8%A3%85"><span class="nav-number">2.</span> <span class="nav-text">安装</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E9%85%8D%E7%BD%AE"><span class="nav-number">3.</span> <span class="nav-text">配置</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#System"><span class="nav-number">3.0.1.</span> <span class="nav-text">System</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#Settings"><span class="nav-number">3.0.1.1.</span> <span class="nav-text">Settings</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Interface"><span class="nav-number">3.0.2.</span> <span class="nav-text">Interface</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#WAN"><span class="nav-number">3.0.2.1.</span> <span class="nav-text">WAN</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#LAN"><span class="nav-number">3.0.2.2.</span> <span class="nav-text">LAN</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Services"><span class="nav-number">3.0.3.</span> <span class="nav-text">Services</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#DHCPv4"><span class="nav-number">3.0.3.1.</span> <span class="nav-text">DHCPv4</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Unbound-DNS"><span class="nav-number">3.0.3.2.</span> <span class="nav-text">Unbound DNS</span></a></li></ol></li></ol></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E9%AB%98%E5%8F%AF%E7%94%A8"><span class="nav-number">4.</span> <span class="nav-text">高可用</span></a></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="Muhan Li"
+      src="/images/lightball.png">
+  <p class="site-author-name" itemprop="name">Muhan Li</p>
+  <div class="site-description" itemprop="description">bugstop</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">6</span>
+          <span class="site-state-item-name">posts</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+          
+        <span class="site-state-item-count">5</span>
+        <span class="site-state-item-name">categories</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">13</span>
+        <span class="site-state-item-name">tags</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/bugstop" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;bugstop" rel="noopener" target="_blank"><i class="fab fa-github-square fa-fw"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://www.linkedin.com/public-profile/in/limh" title="LinkedIn → https:&#x2F;&#x2F;www.linkedin.com&#x2F;public-profile&#x2F;in&#x2F;limh" rel="noopener" target="_blank"><i class="fab fa-linkedin fa-fw"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:limuhan@msn.com" title="Email → mailto:limuhan@msn.com" rel="noopener" target="_blank"><i class="fas fa-envelope-square fa-fw"></i></a>
+      </span>
+  </div>
+
+
+
+      </div>
+        <div class="back-to-top motion-element">
+          <i class="fa fa-arrow-up"></i>
+          <span>0%</span>
+        </div>
+
+    </div>
+
+    <div style="margin-top:12.5px">
+      <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-6831136891340085"
+          crossorigin="anonymous"></script>
+      <!-- 纵向广告 -->
+      <ins class="adsbygoogle"
+          style="display:block"
+          data-ad-client="ca-pub-6831136891340085"
+          data-ad-slot="8099727546"
+          data-ad-format="auto"
+          data-full-width-responsive="true"></ins>
+      <script>
+          (adsbygoogle = window.adsbygoogle || []).push({});
+      </script>
+    </div>
+
+    <div style="margin-top:12.5px">
+      <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-6831136891340085"
+          crossorigin="anonymous"></script>
+      <!-- 纵向广告 -->
+      <ins class="adsbygoogle"
+          style="display:block"
+          data-ad-client="ca-pub-6831136891340085"
+          data-ad-slot="8099727546"
+          data-ad-format="auto"
+          data-full-width-responsive="true"></ins>
+      <script>
+          (adsbygoogle = window.adsbygoogle || []).push({});
+      </script>
+    </div>
+
+    <div style="margin-top:12.5px">
+      <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-6831136891340085"
+          crossorigin="anonymous"></script>
+      <!-- 纵向广告 -->
+      <ins class="adsbygoogle"
+          style="display:block"
+          data-ad-client="ca-pub-6831136891340085"
+          data-ad-slot="8099727546"
+          data-ad-format="auto"
+          data-full-width-responsive="true"></ins>
+      <script>
+          (adsbygoogle = window.adsbygoogle || []).push({});
+      </script>
+    </div>
+
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 2019 – 
+  <span itemprop="copyrightYear">2023</span>
+  <span class="with-love">
+    <i class="fas fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Li, Muhan</span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-chart-area"></i>
+    </span>
+    <span title="Symbols count total">9k</span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-coffee"></i>
+    </span>
+    <span title="Reading time total">9 mins.</span>
+</div>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/pisces.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+  
+<script src="/js/local-search.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+  
+
+<script src="https://cdn.jsdelivr.net/npm/jquery/dist/jquery.min.js"></script>
+
+
+<script type="text/javascript" src="/assets/js/fold_action.js"></script>
+
+</body>
+</html>
